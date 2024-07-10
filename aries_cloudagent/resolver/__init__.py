@@ -36,16 +36,16 @@ async def setup(context: InjectionContext):
 
     if not context.settings.get("ledger.disabled"):
         indy_resolver = ClassProvider(
-            "aries_cloudagent.resolver.default.indy.IndyDIDResolver"
+            "did_key_seperate.v1_0.sov.IndyDIDResolver"
         ).provide(context.settings, context.injector)
         await indy_resolver.setup(context)
         registry.register_resolver(indy_resolver)
     else:
         LOGGER.warning("Ledger is not configured, not loading IndyDIDResolver")
-    
-    web_resolver = ClassProvider(
-        "aries_cloudagent.resolver.default.web.WebDIDResolver"
-    ).provide(context.settings, context.injector)
+
+    web_resolver = ClassProvider("did_key_seperate.v1_0.web.WebDIDResolver").provide(
+        context.settings, context.injector
+    )
     await web_resolver.setup(context)
     registry.register_resolver(web_resolver)
 
