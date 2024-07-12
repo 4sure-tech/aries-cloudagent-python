@@ -22,9 +22,9 @@ async def setup(context: InjectionContext):
     await legacy_resolver.setup(context)
     registry.register_resolver(legacy_resolver)
 
-    key_resolver = ClassProvider(
-        "aries_cloudagent.resolver.default.key.KeyDIDResolver"
-    ).provide(context.settings, context.injector)
+    key_resolver = ClassProvider("did_key_plugin.v1_0.key.KeyDIDResolver").provide(
+        context.settings, context.injector
+    )
     await key_resolver.setup(context)
     registry.register_resolver(key_resolver)
 
