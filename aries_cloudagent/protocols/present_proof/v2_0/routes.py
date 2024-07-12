@@ -577,6 +577,7 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                     extra_query,
                 )
             )
+
     except (IndyHolderError, AnonCredsHolderError) as err:
         if pres_ex_record:
             async with profile.session() as session:
@@ -708,6 +709,15 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                                     ):
                                         proof_type = [BbsBlsSignature2020.signature_type]
                                         break
+                    elif claim_fmt.di_vc:
+                        if "proof_type" in claim_fmt.di_vc:
+                            proof_types = claim_fmt.di_vc.get("proof_type")
+
+                            proof_type = [
+                                "DataIntegrityProof"
+                            ]  # [LinkedDataProof.signature_type]
+
+                        # TODO check acceptable proof type(s) ("anoncreds-2023")
                     else:
                         raise web.HTTPBadRequest(
                             reason=(
