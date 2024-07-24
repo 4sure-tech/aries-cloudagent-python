@@ -256,9 +256,7 @@ class AskarWallet(BaseWallet):
             WalletError: If there is another backend error
 
         """
-        did_validation = DIDParametersValidation(
-            self._session.context.inject(DIDMethods)
-        )
+        did_validation = DIDParametersValidation(self._session.context.inject(DIDMethods))
         did_validation.validate_key_type(method, key_type)
 
         if not metadata:
@@ -273,6 +271,7 @@ class AskarWallet(BaseWallet):
                 method, key_type, verkey_bytes, did
             )
 
+            print(verkey, did)
             try:
                 await self._session.handle.insert_key(
                     verkey, keypair, metadata=json.dumps(metadata)
@@ -420,9 +419,7 @@ class AskarWallet(BaseWallet):
         """
 
         try:
-            dids = await self._session.handle.fetch_all(
-                CATEGORY_DID, {"verkey": verkey}
-            )
+            dids = await self._session.handle.fetch_all(CATEGORY_DID, {"verkey": verkey})
         except AskarError as err:
             raise WalletError("Error when fetching local DID for verkey") from err
         if dids:
@@ -566,6 +563,7 @@ class AskarWallet(BaseWallet):
         did: str,
         endpoint: str,
         ledger: BaseLedger,
+        did_methods: DIDMethods,
         endpoint_type: EndpointType = None,
         write_ledger: bool = True,
         endorser_did: str = None,
@@ -578,6 +576,7 @@ class AskarWallet(BaseWallet):
             endpoint (str): The endpoint to set. Use None to clear the endpoint.
             ledger (BaseLedger): The ledger to which to send the endpoint update if the
                 DID is public or posted.
+            did_methods (DIDMethods): The object instance of the `DIDMethods` class.
             endpoint_type (EndpointType, optional): The type of the endpoint/service.
                 Only endpoint_type 'endpoint' affects the local wallet. Defaults to None.
             write_ledger (bool, optional): Whether to write the endpoint update to the
@@ -595,7 +594,7 @@ class AskarWallet(BaseWallet):
 
         """
         did_info = await self.get_local_did(did)
-        if did_info.method != SOV:
+        if did_info.method != did_methods.from_method("sov"):
             raise WalletError("Setting DID endpoint is only allowed for did:sov DIDs")
         metadata = {**did_info.metadata}
         if not endpoint_type:

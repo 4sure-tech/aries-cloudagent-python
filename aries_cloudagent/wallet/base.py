@@ -6,7 +6,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 from ..ledger.base import BaseLedger
 from ..ledger.endpoint_type import EndpointType
 from .did_info import DIDInfo, KeyInfo
-from .did_method import SOV, DIDMethod
+from .did_method import SOV, DIDMethod, DIDMethods
 from .error import WalletError
 from .key_type import KeyType
 
@@ -290,6 +290,7 @@ class BaseWallet(ABC):
         did: str,
         endpoint: str,
         _ledger: BaseLedger,
+        did_methods: DIDMethods,
         endpoint_type: EndpointType = None,
         write_ledger: bool = True,
         endorser_did: str = None,
@@ -302,6 +303,7 @@ class BaseWallet(ABC):
             endpoint (str): The endpoint to set. Use None to clear the endpoint.
             _ledger (BaseLedger): The ledger to which to send the endpoint update if the
                 DID is public or posted.
+            did_methods (DIDMethods): The DID methods to use. Instance of `DIDMethods`.
             endpoint_type (EndpointType, optional): The type of the endpoint/service.
                 Only endpoint_type 'endpoint' affects the local wallet.
             write_ledger (bool, optional): Whether to write the endpoint update to the
@@ -316,7 +318,7 @@ class BaseWallet(ABC):
         """
         did_info = await self.get_local_did(did)
 
-        if did_info.method != SOV:
+        if did_info.method != did_methods.from_method('sov'):
             raise WalletError("Setting DID endpoint is only allowed for did:sov DIDs")
         metadata = {**did_info.metadata}
         if not endpoint_type:

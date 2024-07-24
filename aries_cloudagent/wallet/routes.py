@@ -903,6 +903,7 @@ async def promote_wallet_public_did(
         wallet = session.inject_or(BaseWallet)
         did_info = await wallet.get_local_did(did)
         info = await wallet.set_public_did(did_info)
+        did_methods = session.inject_or(DIDMethods)
 
         if info:
             # Publish endpoint if necessary
@@ -914,6 +915,7 @@ async def promote_wallet_public_did(
                     info.did,
                     endpoint,
                     ledger,
+                    did_methods,
                     write_ledger=write_ledger,
                     endorser_did=endorser_did,
                     routing_keys=routing_keys,
@@ -1012,6 +1014,7 @@ async def wallet_set_did_endpoint(request: web.BaseRequest):
 
     async with context.session() as session:
         wallet = session.inject_or(BaseWallet)
+        did_methods = session.inject_or(DIDMethods)
         if not wallet:
             raise web.HTTPForbidden(reason="No wallet available")
         try:
@@ -1020,6 +1023,7 @@ async def wallet_set_did_endpoint(request: web.BaseRequest):
                 did,
                 endpoint,
                 ledger,
+                did_methods,
                 endpoint_type,
                 write_ledger=write_ledger,
                 endorser_did=endorser_did,
