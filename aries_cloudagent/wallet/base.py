@@ -6,7 +6,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 from ..ledger.base import BaseLedger
 from ..ledger.endpoint_type import EndpointType
 from .did_info import DIDInfo, KeyInfo
-from .did_method import SOV, DIDMethod, DIDMethods
+from .did_method import DIDMethod, DIDMethods
 from .error import WalletError
 from .key_type import KeyType
 

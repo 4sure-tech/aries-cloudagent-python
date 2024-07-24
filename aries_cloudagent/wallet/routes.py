@@ -69,7 +69,7 @@ from .anoncreds_upgrade import (
 )
 from .base import BaseWallet
 from .did_info import DIDInfo
-from .did_method import KEY, PEER2, PEER4, SOV, DIDMethod, DIDMethods, HolderDefinedDid
+from .did_method import PEER2, PEER4, DIDMethod, DIDMethods, HolderDefinedDid
 from .did_posture import DIDPosture
 from .error import WalletError, WalletNotFoundError
 from .key_type import BLS12381G2, ED25519, KeyTypes
@@ -114,7 +114,7 @@ class DIDSchema(OpenAPISchema):
         required=True,
         metadata={
             "description": "Did method associated with the DID",
-            "example": SOV.method_name,
+            "example": "sov",
         },
     )
     key_type = fields.Str(
@@ -303,10 +303,10 @@ class DIDListQueryStringSchema(OpenAPISchema):
     method = fields.Str(
         required=False,
         validate=validate.OneOf(
-            [KEY.method_name, SOV.method_name, PEER2.method_name, PEER4.method_name]
+            ["key", "sov", PEER2.method_name, PEER4.method_name]
         ),
         metadata={
-            "example": KEY.method_name,
+            "example": "key",
             "description": (
                 "DID method to query for. e.g. sov to only fetch indy/sov DIDs"
             ),
@@ -362,9 +362,9 @@ class DIDCreateSchema(OpenAPISchema):
 
     method = fields.Str(
         required=False,
-        dump_default=SOV.method_name,
+        dump_default="sov",
         metadata={
-            "example": SOV.method_name,
+            "example": "sov",
             "description": (
                 "Method for the requested DID."
                 + "Supported methods are 'key', 'sov', and any other registered method."

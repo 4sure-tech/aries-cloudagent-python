@@ -28,7 +28,7 @@ from .crypto import (
     verify_signed_message,
 )
 from .did_info import INVITATION_REUSE_KEY
-from .did_method import SOV, DIDMethod, DIDMethods
+from .did_method import DIDMethod, DIDMethods
 from .did_parameters_validation import DIDParametersValidation
 from .error import WalletDuplicateError, WalletError, WalletNotFoundError
 from .key_type import BLS12381G2, ED25519, X25519, KeyType, KeyTypes
@@ -863,7 +863,7 @@ class AskarWallet(BaseWallet):
             did=did_info["did"],
             verkey=did_info["verkey"],
             metadata=did_info.get("metadata"),
-            method=did_methods.from_method(did_info.get("method", "sov")) or SOV,
+            method=did_methods.from_method(did_info.get("method", "sov")) or did_methods.from_method('sov'),  # noqa: E501
             key_type=key_types.from_key_type(did_info.get("verkey_type", "ed25519"))
             or ED25519,
         )
