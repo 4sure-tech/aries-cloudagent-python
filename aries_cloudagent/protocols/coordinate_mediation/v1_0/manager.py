@@ -11,7 +11,7 @@ from ....storage.error import StorageNotFoundError
 from ....storage.record import StorageRecord
 from ....wallet.base import BaseWallet
 from ....wallet.did_info import DIDInfo
-from ....wallet.did_method import SOV
+from ....wallet.did_method import DIDMethods
 from ....wallet.key_type import ED25519
 from ...routing.v1_0.manager import RoutingManager, RoutingManagerError
 from ...routing.v1_0.models.route_record import RouteRecord
@@ -111,6 +111,8 @@ class MediationManager:
         """
         wallet = session.inject(BaseWallet)
         storage = session.inject(BaseStorage)
+        did_methods = session.inject(DIDMethods)
+        SOV = did_methods.from_method('sov')
         info = await wallet.create_local_did(
             method=SOV,
             key_type=ED25519,

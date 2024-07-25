@@ -11,7 +11,7 @@ from ..version import RECORD_TYPE_ACAPY_VERSION, __version__
 from ..wallet.base import BaseWallet
 from ..wallet.crypto import seed_to_did
 from ..wallet.did_info import DIDInfo
-from ..wallet.did_method import SOV
+from ..wallet.did_method import DIDMethods
 from ..wallet.key_type import ED25519
 from .base import ConfigError
 from .injection_context import InjectionContext
@@ -35,7 +35,8 @@ async def wallet_config(
     """Initialize the root profile."""
 
     mgr = context.inject(ProfileManager)
-
+    did_methods = context.inject_or(DIDMethods)
+    SOV = did_methods.from_method("sov")
     settings = context.settings
     profile_cfg = {}
     for k in CFG_MAP:

@@ -53,7 +53,7 @@ from ..utils.multiformats import multibase, multicodec
 from ..wallet.base import BaseWallet
 from ..wallet.crypto import create_keypair, seed_to_did
 from ..wallet.did_info import INVITATION_REUSE_KEY, DIDInfo, KeyInfo
-from ..wallet.did_method import PEER2, PEER4, SOV, DIDMethod
+from ..wallet.did_method import PEER2, PEER4, DIDMethod, DIDMethods
 from ..wallet.error import WalletNotFoundError
 from ..wallet.key_type import ED25519, X25519
 from ..wallet.util import b64_to_bytes, bytes_to_b58
@@ -1119,6 +1119,8 @@ class BaseConnectionManager:
         """
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
+            did_methods = session.inject_or(DIDMethods)
+            SOV = did_methods.from_method('sov')
             # seed and DID optional
             my_info = await wallet.create_local_did(SOV, ED25519, my_seed, my_did)
 
