@@ -919,12 +919,14 @@ async def present_proof_create_request(request: web.BaseRequest):
     body = await request.json()
 
     comment = body.get("comment")
+    verifier_did = body.get("verifier_did")
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
 
     pres_request_message = V20PresRequest(
         comment=comment,
+        verifier_did=verifier_did,
         will_confirm=True,
         **_formats_attach(pres_request_spec, PRES_20_REQUEST, "request_presentations"),
     )

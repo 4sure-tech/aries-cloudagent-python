@@ -32,6 +32,7 @@ class V20PresRequest(AgentMessage):
         _id: str = None,
         *,
         comment: str = None,
+        verifier_did: str = None,
         will_confirm: bool = None,
         formats: Sequence[V20PresFormat] = None,
         request_presentations_attach: Sequence[AttachDecorator] = None,
@@ -42,6 +43,7 @@ class V20PresRequest(AgentMessage):
         Args:
             _id (str, optional): The ID of the presentation request.
             comment (str, optional): An optional comment.
+            verifier_did (str, optional): The DID of the verifier.
             will_confirm (bool, optional): A flag indicating whether the presentation
                 request will be confirmed.
             formats (Sequence[V20PresFormat], optional): A sequence of presentation
@@ -53,6 +55,7 @@ class V20PresRequest(AgentMessage):
         """
         super().__init__(_id=_id, **kwargs)
         self.comment = comment
+        self.verifier_did = verifier_did
         self.will_confirm = will_confirm or False
         self.formats = list(formats) if formats else []
         self.request_presentations_attach = (
@@ -102,6 +105,10 @@ class V20PresRequestSchema(AgentMessageSchema):
     will_confirm = fields.Bool(
         required=False,
         metadata={"description": "Whether verifier will send confirmation ack"},
+    )
+    verifier_did = fields.Str(
+        required=False,
+        metadata={"description": "DID of the verifier"},
     )
     formats = fields.Nested(
         V20PresFormatSchema,
