@@ -19,6 +19,7 @@ from ..ledger.endpoint_type import EndpointType
 from ..ledger.error import LedgerError
 from ..utils.http import FetchError, fetch
 from ..wallet.base import BaseWallet
+from ..wallet.did_method import DIDMethods
 from .base import ConfigError
 
 LOGGER = logging.getLogger(__name__)
@@ -154,8 +155,9 @@ async def ledger_config(
         endpoint = session.settings.get("default_endpoint")
         if public_did:
             wallet = session.inject(BaseWallet)
+            did_methods = session.inject(DIDMethods)
             try:
-                await wallet.set_did_endpoint(public_did, endpoint, ledger)
+                await wallet.set_did_endpoint(public_did, endpoint, ledger, did_methods)
             except LedgerError as x_ledger:
                 raise ConfigError(x_ledger.message) from x_ledger  # e.g., read-only
 

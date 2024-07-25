@@ -15,7 +15,7 @@ from ....messaging.valid import IndyDID
 from ....storage.error import StorageNotFoundError
 from ....transport.inbound.receipt import MessageReceipt
 from ....wallet.base import BaseWallet
-from ....wallet.did_method import SOV
+from ....wallet.did_method import DIDMethods
 from ....wallet.key_type import ED25519
 from ...coordinate_mediation.v1_0.manager import MediationManager
 from .message_types import ARIES_PROTOCOL as CONN_PROTO
@@ -386,6 +386,8 @@ class ConnectionManager(BaseConnectionManager):
         else:
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
+                did_methods = session.inject_or(DIDMethods)
+                SOV = did_methods.from_method("sov")
                 # Create new DID for connection
                 my_info = await wallet.create_local_did(SOV, ED25519)
             connection.my_did = my_info.did
@@ -492,6 +494,8 @@ class ConnectionManager(BaseConnectionManager):
             if connection.is_multiuse_invitation:
                 async with self.profile.session() as session:
                     wallet = session.inject(BaseWallet)
+                    did_methods = session.inject_or(DIDMethods)
+                    SOV = did_methods.from_method("sov")
                     my_info = await wallet.create_local_did(SOV, ED25519)
 
                 new_connection = ConnRecord(
@@ -550,6 +554,8 @@ class ConnectionManager(BaseConnectionManager):
         else:  # request from public did
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
+                did_methods = session.inject_or(DIDMethods)
+                SOV = did_methods.from_method("sov")
                 my_info = await wallet.create_local_did(SOV, ED25519)
 
             async with self.profile.session() as session:
@@ -638,6 +644,8 @@ class ConnectionManager(BaseConnectionManager):
         else:
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
+                did_methods = session.inject_or(DIDMethods)
+                SOV = did_methods.from_method("sov")
                 my_info = await wallet.create_local_did(SOV, ED25519)
             connection.my_did = my_info.did
 

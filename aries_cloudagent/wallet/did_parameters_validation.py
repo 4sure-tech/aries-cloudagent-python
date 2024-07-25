@@ -6,9 +6,7 @@ from aries_cloudagent.did.did_key import DIDKey
 from aries_cloudagent.wallet.did_method import (
     DIDMethods,
     DIDMethod,
-    HolderDefinedDid,
-    KEY,
-    SOV,
+    HolderDefinedDid
 )
 from aries_cloudagent.wallet.error import WalletError
 from aries_cloudagent.wallet.key_type import KeyType
@@ -56,9 +54,9 @@ class DIDParametersValidation:
 
         # We need some did method specific handling. If more did methods
         # are added it is probably better create a did method specific handler
-        elif method == KEY:
+        elif method == self.did_methods.from_method("key"):
             return DIDKey.from_public_key(verkey, key_type).did
-        elif method == SOV:
+        elif method == self.did_methods.from_method("sov"):
             return bytes_to_b58(verkey[:16]) if not did else did
 
         return did

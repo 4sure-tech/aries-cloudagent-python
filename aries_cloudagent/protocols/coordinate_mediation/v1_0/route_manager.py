@@ -13,7 +13,7 @@ from ....messaging.responder import BaseResponder
 from ....storage.error import StorageNotFoundError
 from ....wallet.base import BaseWallet
 from ....wallet.did_info import DIDInfo
-from ....wallet.did_method import SOV
+from ....wallet.did_method import DIDMethods
 from ....wallet.key_type import ED25519
 from ...routing.v1_0.models.route_record import RouteRecord
 from .manager import MediationManager
@@ -54,6 +54,8 @@ class RouteManager(ABC):
         if not conn_record.my_did:
             async with profile.session() as session:
                 wallet = session.inject(BaseWallet)
+                did_methods = session.inject(DIDMethods)
+                SOV = did_methods.from_method("sov")
                 # Create new DID for connection
                 my_info = await wallet.create_local_did(SOV, ED25519)
                 conn_record.my_did = my_info.did
