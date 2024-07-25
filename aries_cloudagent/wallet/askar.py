@@ -28,7 +28,7 @@ from .crypto import (
     verify_signed_message,
 )
 from .did_info import INVITATION_REUSE_KEY
-from .did_method import SOV, DIDMethod, DIDMethods
+from .did_method import DIDMethod, DIDMethods
 from .did_parameters_validation import DIDParametersValidation
 from .error import WalletDuplicateError, WalletError, WalletNotFoundError
 from .key_type import BLS12381G2, ED25519, X25519, KeyType, KeyTypes
@@ -595,6 +595,8 @@ class AskarWallet(BaseWallet):
 
         """
         did_info = await self.get_local_did(did)
+        did_methods = self.session.inject(DIDMethods)
+        SOV = did_methods.from_method("sov")
         if did_info.method != SOV:
             raise WalletError("Setting DID endpoint is only allowed for did:sov DIDs")
         metadata = {**did_info.metadata}
@@ -859,6 +861,7 @@ class AskarWallet(BaseWallet):
         """Convert a DID record into the expected DIDInfo format."""
         did_info = entry.value_json
         did_methods: DIDMethods = self._session.inject(DIDMethods)
+        SOV = did_methods.from_method("sov")
         key_types: KeyTypes = self._session.inject(KeyTypes)
         return DIDInfo(
             did=did_info["did"],
