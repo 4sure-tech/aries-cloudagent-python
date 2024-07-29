@@ -65,6 +65,7 @@ from .messages.pres_problem_report import ProblemReportReason
 from .messages.pres_proposal import V20PresProposal
 from .messages.pres_request import V20PresRequest
 from .models.pres_exchange import V20PresExRecord, V20PresExRecordSchema
+from ....wallet.base import BaseWallet
 
 
 class V20PresentProofModuleResponseSchema(OpenAPISchema):
@@ -919,12 +920,20 @@ async def present_proof_create_request(request: web.BaseRequest):
     body = await request.json()
 
     comment = body.get("comment")
+    verifier_did = body.get("verifier_did")
+    wallet = profile.inject(BaseWallet)
+    try:
+        did_info = await wallet.get_local_did(verifier_did)  # noqa: F841
+    except WalletNotFoundError as err:
+        raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
 
     pres_request_message = V20PresRequest(
         comment=comment,
+        verifier_did=verifier_did,
         will_confirm=True,
         **_formats_attach(pres_request_spec, PRES_20_REQUEST, "request_presentations"),
     )
@@ -1003,11 +1012,19 @@ async def present_proof_send_free_request(request: web.BaseRequest):
         raise web.HTTPForbidden(reason=f"Connection {connection_id} not ready")
 
     comment = body.get("comment")
+    verifier_did = body.get("verifier_did")
+    wallet = profile.inject(BaseWallet)
+    try:
+        did_info = await wallet.get_local_did(verifier_did)  # noqa: F841
+    except WalletNotFoundError as err:
+        raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
     pres_request_message = V20PresRequest(
         comment=comment,
+        verifier_did=verifier_did,
         will_confirm=True,
         **_formats_attach(pres_request_spec, PRES_20_REQUEST, "request_presentations"),
     )
