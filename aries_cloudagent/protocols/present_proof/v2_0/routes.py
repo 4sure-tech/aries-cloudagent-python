@@ -65,6 +65,7 @@ from .messages.pres_problem_report import ProblemReportReason
 from .messages.pres_proposal import V20PresProposal
 from .messages.pres_request import V20PresRequest
 from .models.pres_exchange import V20PresExRecord, V20PresExRecordSchema
+from ....wallet.base import BaseWallet
 
 
 class V20PresentProofModuleResponseSchema(OpenAPISchema):
@@ -920,6 +921,12 @@ async def present_proof_create_request(request: web.BaseRequest):
 
     comment = body.get("comment")
     verifier_did = body.get("verifier_did")
+    wallet = profile.inject(BaseWallet)
+    try:
+        did_info = await wallet.get_local_did(verifier_did)  # noqa: F841
+    except WalletNotFoundError as err:
+        raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
@@ -1006,6 +1013,12 @@ async def present_proof_send_free_request(request: web.BaseRequest):
 
     comment = body.get("comment")
     verifier_did = body.get("verifier_did")
+    wallet = profile.inject(BaseWallet)
+    try:
+        did_info = await wallet.get_local_did(verifier_did)  # noqa: F841
+    except WalletNotFoundError as err:
+        raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
