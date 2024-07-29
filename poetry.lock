@@ -2824,4 +2824,4 @@ didcommv2 = ["didcomm-messaging"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "361c4cf9edbbca0f372ebf4c0681c5c3da3794269be365acf16eab5f446a5b2d"
+content-hash = "fcc19e94f095d518229c17736ee34f6c825dc4a8c45e00644191f5bc46dcddf4"
