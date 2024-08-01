@@ -921,12 +921,17 @@ async def present_proof_create_request(request: web.BaseRequest):
 
     comment = body.get("comment")
     verifier_did = body.get("verifier_did")
-    async with profile.session() as session:
-        wallet = session.inject(BaseWallet)
-        try:
-            await wallet.get_local_did(did=verifier_did)
-        except WalletNotFoundError as err:
-            raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+    verifier_verkey = None
+    if verifier_did is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            try:
+                didinfo = await wallet.get_local_did(did=verifier_did)
+                verifier_verkey = didinfo.verkey
+            except WalletNotFoundError as err:
+                raise web.HTTPBadRequest(
+                    reason="DID is not present in wallet!"
+                ) from err
 
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
@@ -947,6 +952,18 @@ async def present_proof_create_request(request: web.BaseRequest):
         context.settings,
         trace_msg,
     )
+
+    if verifier_verkey is not None:
+        ser_pres_request_message = pres_request_message.serialize()
+        ser_pres_request_message_bytes = json.dumps(ser_pres_request_message).encode(
+            "utf-8"
+        )
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            await wallet.sign_message(ser_pres_request_message_bytes, verifier_verkey)
+        pres_request_message.set_signature(
+            "verifier_did", ser_pres_request_message_bytes
+        )
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
@@ -1014,13 +1031,17 @@ async def present_proof_send_free_request(request: web.BaseRequest):
 
     comment = body.get("comment")
     verifier_did = body.get("verifier_did")
+    verifier_verkey = None
     if verifier_did is not None:
         async with profile.session() as session:
             wallet = session.inject(BaseWallet)
             try:
-                await wallet.get_local_did(did=verifier_did)
+                didinfo = await wallet.get_local_did(did=verifier_did)
+                verifier_verkey = didinfo.verkey
             except WalletNotFoundError as err:
-                raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+                raise web.HTTPBadRequest(
+                    reason="DID is not present in wallet!"
+                ) from err
 
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
@@ -1040,9 +1061,18 @@ async def present_proof_send_free_request(request: web.BaseRequest):
         context.settings,
         trace_msg,
     )
-    
-    ser_pres_request_message = pres_request_message.serialize()
-    print(ser_pres_request_message, type(ser_pres_request_message))
+
+    if verifier_verkey is not None:
+        ser_pres_request_message = pres_request_message.serialize()
+        ser_pres_request_message_bytes = json.dumps(ser_pres_request_message).encode(
+            "utf-8"
+        )
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            await wallet.sign_message(ser_pres_request_message_bytes, verifier_verkey)
+        pres_request_message.set_signature(
+            "verifier_did", ser_pres_request_message_bytes
+        )
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
