@@ -1014,12 +1014,13 @@ async def present_proof_send_free_request(request: web.BaseRequest):
 
     comment = body.get("comment")
     verifier_did = body.get("verifier_did")
-    async with profile.session() as session:
-        wallet = session.inject(BaseWallet)
-        try:
-            await wallet.get_local_did(did=verifier_did)
-        except WalletNotFoundError as err:
-            raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+    if verifier_did is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            try:
+                await wallet.get_local_did(did=verifier_did)
+            except WalletNotFoundError as err:
+                raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
 
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
@@ -1039,6 +1040,9 @@ async def present_proof_send_free_request(request: web.BaseRequest):
         context.settings,
         trace_msg,
     )
+    
+    ser_pres_request_message = pres_request_message.serialize()
+    print(ser_pres_request_message, type(ser_pres_request_message))
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
