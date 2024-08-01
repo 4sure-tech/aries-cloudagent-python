@@ -1,5 +1,7 @@
 """Presentation request message handler."""
 
+from aries_cloudagent.resolver.did_resolver import DIDResolver
+from aries_cloudagent.wallet.base import BaseWallet
 from .....anoncreds.holder import AnonCredsHolderError
 from .....core.oob_processor import OobMessageProcessor
 from .....indy.holder import IndyHolderError
@@ -64,6 +66,28 @@ class V20PresRequestHandler(BaseHandler):
         profile = context.profile
         pres_manager = V20PresManager(profile)
 
+        pres_request = context.message
+        if pres_request.verifier_did is not None:
+            verifier_did = pres_request.verifier_did
+            did_resolver = profile.inject(DIDResolver)
+            wallet = profile.inject(BaseWallet)
+            did_document = await did_resolver.resolve(profile=profile, did=verifier_did)
+            verification_method_list = did_document.get("verificationMethod", [])
+            request_verified = False
+            for method in verification_method_list:
+                verkey = method.get("publicKeyBase58")
+                if verkey:
+                    try:
+                        pres_request.verify_signed_field("verifier_did", wallet, verkey)
+                        request_verified = True
+                        break
+                    except Exception:
+                        continue
+            if not request_verified:
+                raise HandlerException(
+                    "Presentation request signature verification failed"
+                )
+            
         # Get pres ex record (holder initiated via proposal)
         # or create it (verifier sent request first)
         try:

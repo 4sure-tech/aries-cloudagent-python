@@ -954,16 +954,9 @@ async def present_proof_create_request(request: web.BaseRequest):
     )
 
     if verifier_verkey is not None:
-        ser_pres_request_message = pres_request_message.serialize()
-        ser_pres_request_message_bytes = json.dumps(ser_pres_request_message).encode(
-            "utf-8"
-        )
         async with profile.session() as session:
             wallet = session.inject(BaseWallet)
-            await wallet.sign_message(ser_pres_request_message_bytes, verifier_verkey)
-        pres_request_message.set_signature(
-            "verifier_did", ser_pres_request_message_bytes
-        )
+            pres_request_message.sign_field("verifier_did", verifier_verkey, wallet)
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
@@ -1063,16 +1056,9 @@ async def present_proof_send_free_request(request: web.BaseRequest):
     )
 
     if verifier_verkey is not None:
-        ser_pres_request_message = pres_request_message.serialize()
-        ser_pres_request_message_bytes = json.dumps(ser_pres_request_message).encode(
-            "utf-8"
-        )
         async with profile.session() as session:
             wallet = session.inject(BaseWallet)
-            await wallet.sign_message(ser_pres_request_message_bytes, verifier_verkey)
-        pres_request_message.set_signature(
-            "verifier_did", ser_pres_request_message_bytes
-        )
+            pres_request_message.sign_field("verifier_did", verifier_verkey, wallet)
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
