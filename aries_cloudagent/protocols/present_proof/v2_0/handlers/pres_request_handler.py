@@ -80,19 +80,17 @@ class V20PresRequestHandler(BaseHandler):
                 request_verified = False
                 for method in verification_method_list:
                     verkey = method.get("publicKeyBase58")
+                    print(f"Verkey: {verkey}")
                     if verkey:
-                        try:
-                            res = await pres_request.verify_signed_field(
-                                "verifier_did", wallet, verkey
-                            )
-                            print(f"\n\nVerification Result: {res}\n\n")
-                            if res == verkey:
-                                request_verified = True
-                                break
-                            else:
-                                print("Verkey does not match. Retrying...")
-                        except Exception:
-                            continue
+                        res = await pres_request.verify_signed_field(
+                            "verifier_did", wallet, verkey
+                        )
+                        print(f"\n\nVerification Result: {res}\n\n")
+                        if res == verkey:
+                            request_verified = True
+                            break
+                        else:
+                            print("Verkey does not match. Retrying...")
                 if not request_verified:
                     raise HandlerException(
                         "Presentation request signature verification failed"
