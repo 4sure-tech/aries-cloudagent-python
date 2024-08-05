@@ -1,7 +1,10 @@
 """Presentation request message handler."""
 
+import base64
+import json
 from aries_cloudagent.resolver.did_resolver import DIDResolver
 from aries_cloudagent.wallet.base import BaseWallet
+from aries_cloudagent.wallet.key_type import ED25519
 from .....anoncreds.holder import AnonCredsHolderError
 from .....core.oob_processor import OobMessageProcessor
 from .....indy.holder import IndyHolderError
@@ -68,7 +71,6 @@ class V20PresRequestHandler(BaseHandler):
 
         pres_request = context.message
         if pres_request.verifier_did is not None:
-            print("Verifer DID found...verifying signature")
             verifier_did = pres_request.verifier_did
             async with profile.session() as session:
                 did_resolver = session.inject(DIDResolver)
@@ -80,17 +82,24 @@ class V20PresRequestHandler(BaseHandler):
                 request_verified = False
                 for method in verification_method_list:
                     verkey = method.get("publicKeyBase58")
-                    print(f"Verkey: {verkey}")
+                    key_type = ED25519 # need to change this to support other key types
+                    sr_pres_request = pres_request.serialize()
+                    sr_pres_request.pop("~thread", None)
+                    sr_pres_request.pop("signature", None)
+                    sr_pres_request_bytes = json.dumps(sr_pres_request).encode("utf-8")
                     if verkey:
-                        res = await pres_request.verify_signed_field(
-                            "verifier_did", wallet, verkey
-                        )
-                        print(f"\n\nVerification Result: {res}\n\n")
-                        if res == verkey:
-                            request_verified = True
-                            break
-                        else:
-                            print("Verkey does not match. Retrying...")
+                        try:
+                            request_verified = await wallet.verify_message(
+                                sr_pres_request_bytes,
+                                base64.b64decode(pres_request.signature),
+                                verkey,
+                                key_type,
+                            )
+                            if request_verified:
+                                break
+                        except Exception as e:
+                            print(f"Error verifying signature: {e}")
+                            continue
                 if not request_verified:
                     raise HandlerException(
                         "Presentation request signature verification failed"

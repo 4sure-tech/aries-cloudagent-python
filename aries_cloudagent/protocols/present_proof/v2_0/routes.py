@@ -1046,6 +1046,7 @@ async def present_proof_send_free_request(request: web.BaseRequest):
             sr_pres_request_message_bytes: bytes = json.dumps(
                 sr_pres_request_message
             ).encode("utf-8")
+            print(f"==========================>{sr_pres_request_message}")
             sign = await wallet.sign_message(
                 sr_pres_request_message_bytes, verifier_verkey
             )
