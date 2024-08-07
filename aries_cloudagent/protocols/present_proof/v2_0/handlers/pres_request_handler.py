@@ -82,7 +82,7 @@ class V20PresRequestHandler(BaseHandler):
                 request_verified = False
                 for method in verification_method_list:
                     verkey = method.get("publicKeyBase58")
-                    key_type = ED25519 # need to change this to support other key types
+                    key_type = ED25519  # need to change this to support other key types
                     sr_pres_request = pres_request.serialize()
                     sr_pres_request.pop("~thread", None)
                     sr_pres_request.pop("signature", None)
@@ -98,11 +98,13 @@ class V20PresRequestHandler(BaseHandler):
                             if request_verified:
                                 break
                         except Exception as e:
-                            print(f"Error verifying signature: {e}")
+                            print(
+                                f"Could not verify signature...Retrying with next verification method: {e}"  # noqa: E501
+                            )
                             continue
                 if not request_verified:
                     raise HandlerException(
-                        "Presentation request signature verification failed"
+                        "Presentation request signature verification failed. DID of verifier is not verifed"  # noqa: E501
                     )
 
         # Get pres ex record (holder initiated via proposal)
