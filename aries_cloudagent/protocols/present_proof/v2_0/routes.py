@@ -65,6 +65,7 @@ from .messages.pres_problem_report import ProblemReportReason
 from .messages.pres_proposal import V20PresProposal
 from .messages.pres_request import V20PresRequest
 from .models.pres_exchange import V20PresExRecord, V20PresExRecordSchema
+from ....wallet.base import BaseWallet
 
 
 class V20PresentProofModuleResponseSchema(OpenAPISchema):
@@ -159,9 +160,7 @@ class V20PresProposalRequestSchema(AdminAPIMessageTracingSchema):
         allow_none=True,
         metadata={"description": "Human-readable comment"},
     )
-    presentation_proposal = fields.Nested(
-        V20PresProposalByFormatSchema(), required=True
-    )
+    presentation_proposal = fields.Nested(V20PresProposalByFormatSchema(), required=True)
     auto_present = fields.Boolean(
         required=False,
         dump_default=False,
@@ -409,9 +408,7 @@ def _formats_attach(by_format: Mapping, msg_type: str, spec: str) -> Mapping:
     attach = []
     for fmt_api, item_by_fmt in by_format.items():
         if fmt_api == V20PresFormat.Format.INDY.api:
-            attach.append(
-                AttachDecorator.data_base64(mapping=item_by_fmt, ident=fmt_api)
-            )
+            attach.append(AttachDecorator.data_base64(mapping=item_by_fmt, ident=fmt_api))
         elif fmt_api == V20PresFormat.Format.DIF.api:
             attach.append(AttachDecorator.data_json(mapping=item_by_fmt, ident=fmt_api))
     return {
@@ -604,9 +601,7 @@ async def present_proof_credentials_list(request: web.BaseRequest):
             input_descriptors_list = dif_pres_request.get(
                 "presentation_definition", {}
             ).get("input_descriptors")
-            claim_fmt = dif_pres_request.get("presentation_definition", {}).get(
-                "format"
-            )
+            claim_fmt = dif_pres_request.get("presentation_definition", {}).get("format")
             if claim_fmt and len(claim_fmt.keys()) > 0:
                 claim_fmt = ClaimFormat.deserialize(claim_fmt)
             input_descriptors = []
@@ -658,16 +653,13 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                             elif (
                                 len(proof_types) == 1
                                 and (
-                                    BbsBlsSignature2020.signature_type
-                                    not in proof_types
+                                    BbsBlsSignature2020.signature_type not in proof_types
                                 )
                                 and (
-                                    Ed25519Signature2018.signature_type
-                                    not in proof_types
+                                    Ed25519Signature2018.signature_type not in proof_types
                                 )
                                 and (
-                                    Ed25519Signature2020.signature_type
-                                    not in proof_types
+                                    Ed25519Signature2020.signature_type not in proof_types
                                 )
                             ):
                                 raise web.HTTPBadRequest(
@@ -681,16 +673,13 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                             elif (
                                 len(proof_types) >= 2
                                 and (
-                                    BbsBlsSignature2020.signature_type
-                                    not in proof_types
+                                    BbsBlsSignature2020.signature_type not in proof_types
                                 )
                                 and (
-                                    Ed25519Signature2018.signature_type
-                                    not in proof_types
+                                    Ed25519Signature2018.signature_type not in proof_types
                                 )
                                 and (
-                                    Ed25519Signature2020.signature_type
-                                    not in proof_types
+                                    Ed25519Signature2020.signature_type not in proof_types
                                 )
                             ):
                                 raise web.HTTPBadRequest(
@@ -706,25 +695,18 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                                         proof_format
                                         == Ed25519Signature2018.signature_type
                                     ):
-                                        proof_type = [
-                                            Ed25519Signature2018.signature_type
-                                        ]
+                                        proof_type = [Ed25519Signature2018.signature_type]
                                         break
                                     elif (
                                         proof_format
                                         == Ed25519Signature2020.signature_type
                                     ):
-                                        proof_type = [
-                                            Ed25519Signature2020.signature_type
-                                        ]
+                                        proof_type = [Ed25519Signature2020.signature_type]
                                         break
                                     elif (
-                                        proof_format
-                                        == BbsBlsSignature2020.signature_type
+                                        proof_format == BbsBlsSignature2020.signature_type
                                     ):
-                                        proof_type = [
-                                            BbsBlsSignature2020.signature_type
-                                        ]
+                                        proof_type = [BbsBlsSignature2020.signature_type]
                                         break
                     else:
                         raise web.HTTPBadRequest(
@@ -919,12 +901,24 @@ async def present_proof_create_request(request: web.BaseRequest):
     body = await request.json()
 
     comment = body.get("comment")
+    verifier_did = body.get("verifier_did")
+    verifier_verkey = None
+    if verifier_did is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            try:
+                didinfo = await wallet.get_local_did(did=verifier_did)
+                verifier_verkey = didinfo.verkey
+            except WalletNotFoundError as err:
+                raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
 
     pres_request_message = V20PresRequest(
         comment=comment,
+        verifier_did=verifier_did,
         will_confirm=True,
         **_formats_attach(pres_request_spec, PRES_20_REQUEST, "request_presentations"),
     )
@@ -937,6 +931,18 @@ async def present_proof_create_request(request: web.BaseRequest):
         context.settings,
         trace_msg,
     )
+
+    if verifier_verkey is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            sr_pres_request_message = pres_request_message.serialize()
+            sr_pres_request_message_bytes: bytes = json.dumps(
+                sr_pres_request_message
+            ).encode("utf-8")
+            sign = await wallet.sign_message(
+                sr_pres_request_message_bytes, verifier_verkey
+            )
+            pres_request_message.add_signature(sign)
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
@@ -1003,11 +1009,23 @@ async def present_proof_send_free_request(request: web.BaseRequest):
         raise web.HTTPForbidden(reason=f"Connection {connection_id} not ready")
 
     comment = body.get("comment")
+    verifier_did = body.get("verifier_did")
+    verifier_verkey = None
+    if verifier_did is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            try:
+                didinfo = await wallet.get_local_did(did=verifier_did)
+                verifier_verkey = didinfo.verkey
+            except WalletNotFoundError as err:
+                raise web.HTTPBadRequest(reason="DID is not present in wallet!") from err
+
     pres_request_spec = body.get("presentation_request")
     if pres_request_spec and V20PresFormat.Format.INDY.api in pres_request_spec:
         await _add_nonce(pres_request_spec[V20PresFormat.Format.INDY.api])
     pres_request_message = V20PresRequest(
         comment=comment,
+        verifier_did=verifier_did,
         will_confirm=True,
         **_formats_attach(pres_request_spec, PRES_20_REQUEST, "request_presentations"),
     )
@@ -1020,6 +1038,19 @@ async def present_proof_send_free_request(request: web.BaseRequest):
         context.settings,
         trace_msg,
     )
+
+    if verifier_verkey is not None:
+        async with profile.session() as session:
+            wallet = session.inject(BaseWallet)
+            sr_pres_request_message = pres_request_message.serialize()
+            sr_pres_request_message_bytes: bytes = json.dumps(
+                sr_pres_request_message
+            ).encode("utf-8")
+            print(f"==========================>{sr_pres_request_message}")
+            sign = await wallet.sign_message(
+                sr_pres_request_message_bytes, verifier_verkey
+            )
+            pres_request_message.add_signature(sign)
 
     pres_manager = V20PresManager(profile)
     pres_ex_record = None
@@ -1385,9 +1416,7 @@ async def present_proof_remove(request: web.BaseRequest):
     try:
         async with context.profile.session() as session:
             try:
-                pres_ex_record = await V20PresExRecord.retrieve_by_id(
-                    session, pres_ex_id
-                )
+                pres_ex_record = await V20PresExRecord.retrieve_by_id(session, pres_ex_id)
                 await pres_ex_record.delete_record(session)
             except (BaseModelError, ValidationError):
                 storage = session.inject(BaseStorage)
