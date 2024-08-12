@@ -5,14 +5,7 @@ import json
 import logging
 from typing import List, Optional, Sequence, Tuple, Union, cast
 
-from aries_askar import (
-    AskarError,
-    AskarErrorCode,
-    Entry,
-    Key,
-    KeyAlg,
-    SeedMethod,
-)
+from aries_askar import AskarError, AskarErrorCode, Entry, Key, KeyAlg, SeedMethod
 
 from ..askar.didcomm.v1 import pack_message, unpack_message
 from ..askar.profile import AskarProfileSession
@@ -22,11 +15,7 @@ from ..ledger.error import LedgerConfigError
 from ..storage.askar import AskarStorage
 from ..storage.base import StorageDuplicateError, StorageNotFoundError, StorageRecord
 from .base import BaseWallet, DIDInfo, KeyInfo
-from .crypto import (
-    sign_message,
-    validate_seed,
-    verify_signed_message,
-)
+from .crypto import sign_message, validate_seed, verify_signed_message
 from .did_info import INVITATION_REUSE_KEY
 from .did_method import DIDMethod, DIDMethods
 from .did_parameters_validation import DIDParametersValidation
@@ -256,8 +245,15 @@ class AskarWallet(BaseWallet):
             WalletError: If there is another backend error
 
         """
-        did_validation = DIDParametersValidation(self._session.context.inject(DIDMethods))
+        did_validation = DIDParametersValidation(
+            self._session.context.inject(DIDMethods)
+        )
         did_validation.validate_key_type(method, key_type)
+
+        if method is None:
+            raise WalletError(
+                "DID Method is is not provided or not supported. Please use plugins to support the DID Method"
+            )
 
         if not metadata:
             metadata = {}
@@ -419,7 +415,9 @@ class AskarWallet(BaseWallet):
         """
 
         try:
-            dids = await self._session.handle.fetch_all(CATEGORY_DID, {"verkey": verkey})
+            dids = await self._session.handle.fetch_all(
+                CATEGORY_DID, {"verkey": verkey}
+            )
         except AskarError as err:
             raise WalletError("Error when fetching local DID for verkey") from err
         if dids:
@@ -863,7 +861,8 @@ class AskarWallet(BaseWallet):
             did=did_info["did"],
             verkey=did_info["verkey"],
             metadata=did_info.get("metadata"),
-            method=did_methods.from_method(did_info.get("method", "sov")) or did_methods.from_method('sov'),  # noqa: E501
+            method=did_methods.from_method(did_info.get("method", "sov"))
+            or did_methods.from_method("sov"),  # noqa: E501
             key_type=key_types.from_key_type(did_info.get("verkey_type", "ed25519"))
             or ED25519,
         )

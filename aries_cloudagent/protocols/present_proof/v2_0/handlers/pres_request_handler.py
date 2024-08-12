@@ -98,12 +98,12 @@ class V20PresRequestHandler(BaseHandler):
                             if request_verified:
                                 break
                         except Exception as e:
-                            print(
+                            self._logger.error(
                                 f"Could not verify signature...Retrying with next verification method: {e}"  # noqa: E501
                             )
                             continue
                 if not request_verified:
-                    raise HandlerException(
+                    self._logger.error(
                         "Presentation request signature verification failed. DID of verifier is not verifed"  # noqa: E501
                     )
 
@@ -138,6 +138,20 @@ class V20PresRequestHandler(BaseHandler):
         pres_ex_record = await pres_manager.receive_pres_request(
             pres_ex_record
         )  # mgr only saves record: on exception, saving state err is hopeless
+
+        if not request_verified:
+            if pres_ex_record:
+                async with profile.session() as session:
+                    await pres_ex_record.save_error_state(
+                        session,
+                        reason="Presentation request signature verification failed",
+                    )
+                await responder.send_reply(
+                    problem_report_for_record(
+                        pres_ex_record,
+                        ProblemReportReason.ABANDONED.value,  # them: be vague
+                    )
+                )
 
         r_time = trace_event(
             context.settings,
