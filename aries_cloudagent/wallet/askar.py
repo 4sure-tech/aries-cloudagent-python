@@ -245,7 +245,9 @@ class AskarWallet(BaseWallet):
             WalletError: If there is another backend error
 
         """
-        did_validation = DIDParametersValidation(self._session.context.inject(DIDMethods))
+        did_validation = DIDParametersValidation(
+            self._session.context.inject(DIDMethods)
+        )
         did_validation.validate_key_type(method, key_type)
 
         if method is None:
@@ -413,7 +415,9 @@ class AskarWallet(BaseWallet):
         """
 
         try:
-            dids = await self._session.handle.fetch_all(CATEGORY_DID, {"verkey": verkey})
+            dids = await self._session.handle.fetch_all(
+                CATEGORY_DID, {"verkey": verkey}
+            )
         except AskarError as err:
             raise WalletError("Error when fetching local DID for verkey") from err
         if dids:
