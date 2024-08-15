@@ -479,9 +479,7 @@ class DIFPresExchHandler:
         if subjects:
             if isinstance(subjects, dict):
                 subjects = [subjects]
-            subject_ids = [
-                subject.get("id") for subject in subjects if ("id" in subject)
-            ]
+            subject_ids = [subject.get("id") for subject in subjects if ("id" in subject)]
         else:
             cred_dict["credentialSubject"] = {}
 
@@ -551,9 +549,7 @@ class DIFPresExchHandler:
         else:
             return self.reveal_doc_frame
 
-    def new_credential_builder(
-        self, new_credential: dict, unflatten_dict: dict
-    ) -> dict:
+    def new_credential_builder(self, new_credential: dict, unflatten_dict: dict) -> dict:
         """Update and return the new_credential.
 
         Args:
@@ -651,8 +647,8 @@ class DIFPresExchHandler:
                     if isinstance(to_check, str):
                         if _filter.fmt == "date" or _filter.fmt == "date-time":
                             try:
-                                to_compare_date = (
-                                    self.string_to_timezone_aware_datetime(to_check)
+                                to_compare_date = self.string_to_timezone_aware_datetime(
+                                    to_check
                                 )
                                 if isinstance(to_compare_date, datetime):
                                     return True
@@ -1165,9 +1161,7 @@ class DIFPresExchHandler:
                     return float(val)
                 except ValueError:
                     pass
-        raise DIFPresExchError(
-            "Invalid type provided for comparison/numeric operation."
-        )
+        raise DIFPresExchError("Invalid type provided for comparison/numeric operation.")
 
     async def merge_nested_results(
         self, nested_result: Sequence[dict], exclude: dict
@@ -1290,17 +1284,13 @@ class DIFPresExchHandler:
                         applicable_creds=applicable_creds
                     )
                     if not issuer_id:
-                        vp = await create_presentation(
-                            credentials=applicable_creds_list
-                        )
+                        vp = await create_presentation(credentials=applicable_creds_list)
                         vp = self.__add_dif_fields_to_vp(vp, submission_property)
                         result_vp.append(vp)
                         continue
                     else:
                         applicable_creds_list = filtered_creds_list
-                        vp = await create_presentation(
-                            credentials=applicable_creds_list
-                        )
+                        vp = await create_presentation(credentials=applicable_creds_list)
                 else:
                     issuer_id = self.pres_signing_did
                     vp = await create_presentation(credentials=applicable_creds_list)
@@ -1403,9 +1393,7 @@ class DIFPresExchHandler:
         input_descriptors = pd.input_descriptors
         if isinstance(pres, Sequence):
             for pr in pres:
-                descriptor_map_list = pr["presentation_submission"].get(
-                    "descriptor_map"
-                )
+                descriptor_map_list = pr["presentation_submission"].get("descriptor_map")
                 await self.__verify_desc_map_list(
                     descriptor_map_list, pr, input_descriptors
                 )
@@ -1415,16 +1403,12 @@ class DIFPresExchHandler:
                 descriptor_map_list, pres, input_descriptors
             )
 
-    async def __verify_desc_map_list(
-        self, descriptor_map_list, pres, input_descriptors
-    ):
+    async def __verify_desc_map_list(self, descriptor_map_list, pres, input_descriptors):
         inp_desc_id_constraint_map = {}
         inp_desc_id_schema_one_of_filter = set()
         inp_desc_id_schemas_map = {}
         for input_descriptor in input_descriptors:
-            inp_desc_id_constraint_map[input_descriptor.id] = (
-                input_descriptor.constraint
-            )
+            inp_desc_id_constraint_map[input_descriptor.id] = input_descriptor.constraint
             inp_desc_id_schemas_map[input_descriptor.id] = input_descriptor.schemas
             if input_descriptor.schemas.oneof_filter:
                 inp_desc_id_schema_one_of_filter.add(input_descriptor.id)

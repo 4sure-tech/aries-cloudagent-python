@@ -48,9 +48,7 @@ async def get_genesis_transactions(settings: Settings) -> str:
         elif settings.get("ledger.genesis_file"):
             try:
                 genesis_path = settings["ledger.genesis_file"]
-                LOGGER.info(
-                    "Reading ledger genesis transactions from: %s", genesis_path
-                )
+                LOGGER.info("Reading ledger genesis transactions from: %s", genesis_path)
                 with open(genesis_path, "r") as genesis_file:
                     txns = genesis_file.read()
             except IOError as e:
@@ -82,9 +80,7 @@ async def load_multiple_genesis_transactions_from_config(settings: Settings):
                     with open(genesis_path, "r") as genesis_file:
                         txns = genesis_file.read()
                 except IOError as e:
-                    raise ConfigError(
-                        "Error reading ledger genesis transactions"
-                    ) from e
+                    raise ConfigError("Error reading ledger genesis transactions") from e
         is_write_ledger = (
             False if config.get("is_write") is None else config.get("is_write")
         )
