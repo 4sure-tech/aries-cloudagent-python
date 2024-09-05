@@ -220,6 +220,10 @@ async def plugin_new_did(request: web.BaseRequest):
                                 "id": f"{info.did}#did-communication",
                                 "type": "DIDCommMessaging",
                                 "serviceEndpoint": context.settings.get("default_endpoint"),
+                                "recipientKeys": [f"{info.did}#key-1"],
+                                "routingKeys": [],
+                                "accept": ["didcomm/aip2;env=rfc19"],
+                                "priority": 1
                             }
                         ],
                         "verificationMethod": [
