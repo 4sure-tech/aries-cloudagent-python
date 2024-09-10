@@ -19,7 +19,7 @@ from ....messaging.responder import BaseResponder
 from ....storage.error import StorageNotFoundError
 from ....transport.inbound.receipt import MessageReceipt
 from ....wallet.base import BaseWallet
-from ....wallet.did_method import SOV
+from ....wallet.did_method import DIDMethods
 from ....wallet.did_posture import DIDPosture
 from ....wallet.error import WalletError
 from ....wallet.key_type import ED25519
@@ -490,6 +490,8 @@ class DIDXManager(BaseConnectionManager):
         else:
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
+                did_methods = session.inject(DIDMethods)
+                SOV = did_methods.from_method("sov")
                 my_info = await wallet.create_local_did(
                     method=SOV,
                     key_type=ED25519,

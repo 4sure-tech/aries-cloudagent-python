@@ -17,7 +17,7 @@ from ..storage.base import StorageDuplicateError, StorageNotFoundError, StorageR
 from .base import BaseWallet, DIDInfo, KeyInfo
 from .crypto import sign_message, validate_seed, verify_signed_message
 from .did_info import INVITATION_REUSE_KEY
-from .did_method import SOV, DIDMethod, DIDMethods
+from .did_method import DIDMethod, DIDMethods
 from .did_parameters_validation import DIDParametersValidation
 from .error import WalletDuplicateError, WalletError, WalletNotFoundError
 from .key_type import BLS12381G2, ED25519, X25519, KeyType, KeyTypes
@@ -248,6 +248,11 @@ class AskarWallet(BaseWallet):
         did_validation = DIDParametersValidation(self._session.context.inject(DIDMethods))
         did_validation.validate_key_type(method, key_type)
 
+        if method is None:
+            raise WalletError(
+                "DID Method is is not provided or not supported. Please use plugins to support the DID Method"
+            )
+
         if not metadata:
             metadata = {}
 
@@ -260,6 +265,7 @@ class AskarWallet(BaseWallet):
                 method, key_type, verkey_bytes, did
             )
 
+            print(verkey, did)
             try:
                 await self._session.handle.insert_key(
                     verkey, keypair, metadata=json.dumps(metadata)
@@ -551,6 +557,7 @@ class AskarWallet(BaseWallet):
         did: str,
         endpoint: str,
         ledger: BaseLedger,
+        did_methods: DIDMethods,
         endpoint_type: EndpointType = None,
         write_ledger: bool = True,
         endorser_did: str = None,
@@ -563,6 +570,7 @@ class AskarWallet(BaseWallet):
             endpoint (str): The endpoint to set. Use None to clear the endpoint.
             ledger (BaseLedger): The ledger to which to send the endpoint update if the
                 DID is public or posted.
+            did_methods (DIDMethods): The object instance of the `DIDMethods` class.
             endpoint_type (EndpointType, optional): The type of the endpoint/service.
                 Only endpoint_type 'endpoint' affects the local wallet. Defaults to None.
             write_ledger (bool, optional): Whether to write the endpoint update to the
@@ -580,7 +588,7 @@ class AskarWallet(BaseWallet):
 
         """
         did_info = await self.get_local_did(did)
-        if did_info.method != SOV:
+        if did_info.method != did_methods.from_method("sov"):
             raise WalletError("Setting DID endpoint is only allowed for did:sov DIDs")
         metadata = {**did_info.metadata}
         if not endpoint_type:
@@ -849,7 +857,8 @@ class AskarWallet(BaseWallet):
             did=did_info["did"],
             verkey=did_info["verkey"],
             metadata=did_info.get("metadata"),
-            method=did_methods.from_method(did_info.get("method", "sov")) or SOV,
+            method=did_methods.from_method(did_info.get("method", "sov"))
+            or did_methods.from_method("sov"),  # noqa: E501
             key_type=key_types.from_key_type(did_info.get("verkey_type", "ed25519"))
             or ED25519,
         )

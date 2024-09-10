@@ -1,16 +1,12 @@
-"""Web DID Resolver."""
-
 import urllib.parse
 from typing import Optional, Pattern, Sequence, Text
-
 import aiohttp
 from pydid import DID, DIDDocument
 
-from ...config.injection_context import InjectionContext
-from ...core.profile import Profile
-from ...messaging.valid import DIDWeb
-from ..base import BaseDIDResolver, DIDNotFound, ResolverError, ResolverType
-
+from aries_cloudagent.resolver.base import BaseDIDResolver, ResolverType, DIDNotFound, ResolverError
+from aries_cloudagent.config.injection_context import InjectionContext
+from aries_cloudagent.messaging.valid import DIDWeb
+from aries_cloudagent.core.profile import Profile
 
 class WebDIDResolver(BaseDIDResolver):
     """Web DID Resolver."""
@@ -65,7 +61,9 @@ class WebDIDResolver(BaseDIDResolver):
                         did_doc = DIDDocument.from_json(await response.text())
                         return did_doc.serialize()
                     except Exception as err:
-                        raise ResolverError("Response was incorrectly formatted") from err
+                        raise ResolverError(
+                            "Response was incorrectly formatted"
+                        ) from err
                 if response.status == 404:
                     raise DIDNotFound(f"No document found for {did}")
                 raise ResolverError(

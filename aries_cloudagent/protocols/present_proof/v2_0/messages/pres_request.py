@@ -1,5 +1,6 @@
 """A presentation request content message."""
 
+import base64
 from typing import Sequence
 
 from marshmallow import EXCLUDE, ValidationError, fields, validates_schema
@@ -30,8 +31,10 @@ class V20PresRequest(AgentMessage):
         _id: str = None,
         *,
         comment: str = None,
+        verifier_did: str = None,
         will_confirm: bool = None,
         formats: Sequence[V20PresFormat] = None,
+        signature: bytes = None,
         request_presentations_attach: Sequence[AttachDecorator] = None,
         **kwargs,
     ):
@@ -40,10 +43,12 @@ class V20PresRequest(AgentMessage):
         Args:
             _id (str, optional): The ID of the presentation request.
             comment (str, optional): An optional comment.
+            verifier_did (str, optional): The DID of the verifier.
             will_confirm (bool, optional): A flag indicating whether the presentation
                 request will be confirmed.
             formats (Sequence[V20PresFormat], optional): A sequence of presentation
                 formats.
+            signature (dict, optional): signature object for verifier did.
             request_presentations_attach (Sequence[AttachDecorator], optional): A
                 sequence of proof request attachments.
             kwargs: Additional keyword arguments.
@@ -51,8 +56,10 @@ class V20PresRequest(AgentMessage):
         """
         super().__init__(_id=_id, **kwargs)
         self.comment = comment
+        self.verifier_did = verifier_did
         self.will_confirm = will_confirm or False
         self.formats = list(formats) if formats else []
+        self.signature = signature
         self.request_presentations_attach = (
             list(request_presentations_attach) if request_presentations_attach else []
         )
@@ -84,6 +91,9 @@ class V20PresRequest(AgentMessage):
             else None
         )
 
+    def add_signature(self, sign: bytes):
+        """Add signature to request."""
+        self.signature = base64.b64encode(sign).decode("utf-8")
 
 class V20PresRequestSchema(AgentMessageSchema):
     """Presentation request schema."""
@@ -101,11 +111,19 @@ class V20PresRequestSchema(AgentMessageSchema):
         required=False,
         metadata={"description": "Whether verifier will send confirmation ack"},
     )
+    verifier_did = fields.Str(
+        required=False,
+        metadata={"description": "DID of the verifier"},
+    )
     formats = fields.Nested(
         V20PresFormatSchema,
         many=True,
         required=True,
         metadata={"description": "Acceptable attachment formats"},
+    )
+    signature = fields.Str(
+        required=False,
+        metadata={"description": "signature for verifier did"},
     )
     request_presentations_attach = fields.Nested(
         AttachDecoratorSchema,

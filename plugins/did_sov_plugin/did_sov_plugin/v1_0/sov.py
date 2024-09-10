@@ -9,19 +9,19 @@ from typing import Optional, Pattern, Sequence, Text
 from pydid import DID, DIDDocumentBuilder
 from pydid.verification_method import Ed25519VerificationKey2018, VerificationMethod
 
-from ...config.injection_context import InjectionContext
-from ...core.profile import Profile
-from ...did.did_key import DIDKey
-from ...ledger.endpoint_type import EndpointType
-from ...ledger.error import LedgerError
-from ...ledger.multiple_ledger.ledger_requests_executor import (
+from aries_cloudagent.config.injection_context import InjectionContext
+from aries_cloudagent.core.profile import Profile
+from aries_cloudagent.did.did_key import DIDKey
+from aries_cloudagent.ledger.endpoint_type import EndpointType
+from aries_cloudagent.ledger.error import LedgerError
+from aries_cloudagent.ledger.multiple_ledger.ledger_requests_executor import (
     GET_KEY_FOR_DID,
     IndyLedgerRequestsExecutor,
 )
-from ...messaging.valid import IndyDID
-from ...multitenant.base import BaseMultitenantManager
-from ...wallet.key_type import ED25519
-from ..base import BaseDIDResolver, DIDNotFound, ResolverError, ResolverType
+from aries_cloudagent.messaging.valid import IndyDID
+from aries_cloudagent.multitenant.base import BaseMultitenantManager
+from aries_cloudagent.wallet.key_type import ED25519
+from aries_cloudagent.resolver.base import BaseDIDResolver, DIDNotFound, ResolverError, ResolverType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -142,7 +142,9 @@ class IndyDIDResolver(BaseDIDResolver):
                 )
                 builder.context.append(self.CONTEXT_DIDCOMM_V2)
         else:
-            LOGGER.warning("No endpoint for DID although endpoint attrib was resolvable")
+            LOGGER.warning(
+                "No endpoint for DID although endpoint attrib was resolvable"
+            )
 
         if other_endpoints:
             for type_, endpoint in other_endpoints.items():

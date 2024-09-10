@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Dict, List, Mapping, Optional
 
 from .error import BaseError
-from .key_type import BLS12381G2, ED25519, X25519, KeyType
+from .key_type import ED25519, X25519, KeyType
 
 
 class HolderDefinedDid(Enum):
@@ -59,23 +59,23 @@ class DIDMethod:
         return self._holder_defined_did
 
 
-SOV = DIDMethod(
-    name="sov",
-    key_types=[ED25519],
-    rotation=True,
-    holder_defined_did=HolderDefinedDid.ALLOWED,
-)
-KEY = DIDMethod(
-    name="key",
-    key_types=[ED25519, BLS12381G2],
-    rotation=False,
-)
-WEB = DIDMethod(
-    name="web",
-    key_types=[ED25519, BLS12381G2],
-    rotation=True,
-    holder_defined_did=HolderDefinedDid.REQUIRED,
-)
+# SOV = DIDMethod(
+#     name="sov",
+#     key_types=[ED25519],
+#     rotation=True,
+#     holder_defined_did=HolderDefinedDid.ALLOWED,
+# )
+# KEY = DIDMethod(
+#     name="key",
+#     key_types=[ED25519, BLS12381G2],
+#     rotation=False,
+# )
+# WEB = DIDMethod(
+#     name="web",
+#     key_types=[ED25519, BLS12381G2],
+#     rotation=True,
+#     holder_defined_did=HolderDefinedDid.REQUIRED,
+# )
 PEER2 = DIDMethod(
     name="did:peer:2",
     key_types=[ED25519, X25519],
@@ -97,9 +97,9 @@ class DIDMethods:
     def __init__(self) -> None:
         """Construct did method registry."""
         self._registry: Dict[str, DIDMethod] = {
-            SOV.method_name: SOV,
-            KEY.method_name: KEY,
-            WEB.method_name: WEB,
+            # SOV.method_name: SOV,
+            # KEY.method_name: KEY,
+            # WEB.method_name: WEB,
             PEER2.method_name: PEER2,
             PEER4.method_name: PEER4,
         }
@@ -126,7 +126,9 @@ class DIDMethods:
 
     def from_did(self, did: str) -> DIDMethod:
         """Get DID method instance from the did url."""
-        method_name = did.split(":")[1] if did.startswith("did:") else SOV.method_name
+        method_name = (
+            did.split(":")[1] if did.startswith("did:") else self._registry['sov'].method_name  # noqa: E501
+        )
         method: DIDMethod | None = self.from_method(method_name)
         if not method:
             raise BaseError(f"Unsupported did method: {method_name}")
