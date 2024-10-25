@@ -2,9 +2,9 @@
 
 import base64
 import json
-from aries_cloudagent.resolver.did_resolver import DIDResolver
-from aries_cloudagent.wallet.base import BaseWallet
-from aries_cloudagent.wallet.key_type import ED25519
+from acapy_agent.resolver.did_resolver import DIDResolver
+from acapy_agent.wallet.base import BaseWallet
+from acapy_agent.wallet.key_type import ED25519
 from .....anoncreds.holder import AnonCredsHolderError
 from .....core.oob_processor import OobMessageProcessor
 from .....indy.holder import IndyHolderError
