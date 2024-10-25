@@ -71,7 +71,7 @@ from .anoncreds_upgrade import (
 )
 from .base import BaseWallet
 from .did_info import DIDInfo
-from .did_method import KEY, PEER2, PEER4, SOV, DIDMethod, DIDMethods, HolderDefinedDid
+from .did_method import PEER2, PEER4, DIDMethod, DIDMethods, HolderDefinedDid
 from .did_posture import DIDPosture
 from .error import WalletError, WalletNotFoundError
 from .key_type import BLS12381G2, ED25519, KeyTypes
@@ -116,7 +116,7 @@ class DIDSchema(OpenAPISchema):
         required=True,
         metadata={
             "description": "Did method associated with the DID",
-            "example": SOV.method_name,
+            "example": "sov",
         },
     )
     key_type = fields.Str(
@@ -313,10 +313,10 @@ class DIDListQueryStringSchema(OpenAPISchema):
     method = fields.Str(
         required=False,
         validate=validate.OneOf(
-            [KEY.method_name, SOV.method_name, PEER2.method_name, PEER4.method_name]
+            ["key", "sov", PEER2.method_name, PEER4.method_name]
         ),
         metadata={
-            "example": KEY.method_name,
+            "example": "key",
             "description": (
                 "DID method to query for. e.g. sov to only fetch indy/sov DIDs"
             ),
@@ -372,9 +372,9 @@ class DIDCreateSchema(OpenAPISchema):
 
     method = fields.Str(
         required=False,
-        dump_default=SOV.method_name,
+        dump_default="sov",
         metadata={
-            "example": SOV.method_name,
+            "example": "sov",
             "description": (
                 "Method for the requested DID."
                 + "Supported methods are 'key', 'sov', and any other registered method."
@@ -909,6 +909,7 @@ async def promote_wallet_public_did(
         wallet = session.inject(BaseWallet)
         did_info = await wallet.get_local_did(did)
         info = await wallet.set_public_did(did_info)
+        did_methods = session.inject_or(DIDMethods)
 
         if info:
             # Publish endpoint if necessary
@@ -920,6 +921,7 @@ async def promote_wallet_public_did(
                     info.did,
                     endpoint,
                     ledger,
+                    did_methods,
                     write_ledger=write_ledger,
                     endorser_did=endorser_did,
                     routing_keys=routing_keys,
@@ -1024,6 +1026,7 @@ async def wallet_set_did_endpoint(request: web.BaseRequest):
 
     async with context.session() as session:
         wallet = session.inject_or(BaseWallet)
+        did_methods = session.inject_or(DIDMethods)
         if not wallet:
             raise web.HTTPForbidden(reason="No wallet available")
         try:
@@ -1033,6 +1036,7 @@ async def wallet_set_did_endpoint(request: web.BaseRequest):
                 did,
                 endpoint,
                 ledger,
+                did_methods,
                 endpoint_type,
                 write_ledger=write_ledger,
                 endorser_did=endorser_did,

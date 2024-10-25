@@ -22,11 +22,14 @@ async def setup(context: InjectionContext):
     await legacy_resolver.setup(context)
     registry.register_resolver(legacy_resolver)
 
-    key_resolver = ClassProvider(
-        "acapy_agent.resolver.default.key.KeyDIDResolver"
-    ).provide(context.settings, context.injector)
-    await key_resolver.setup(context)
-    registry.register_resolver(key_resolver)
+    try:
+        key_resolver = ClassProvider("did_key_plugin.v1_0.key.KeyDIDResolver").provide(
+            context.settings, context.injector
+        )
+        await key_resolver.setup(context)
+        registry.register_resolver(key_resolver)
+    except Exception as e:
+        LOGGER.warning(f"Error loading KeyDIDResolver: {str(e)}")
 
     jwk_resolver = ClassProvider(
         "acapy_agent.resolver.default.jwk.JwkDIDResolver"
@@ -34,20 +37,26 @@ async def setup(context: InjectionContext):
     await jwk_resolver.setup(context)
     registry.register_resolver(jwk_resolver)
 
-    if not context.settings.get("ledger.disabled"):
-        indy_resolver = ClassProvider(
-            "acapy_agent.resolver.default.indy.IndyDIDResolver"
-        ).provide(context.settings, context.injector)
-        await indy_resolver.setup(context)
-        registry.register_resolver(indy_resolver)
-    else:
-        LOGGER.warning("Ledger is not configured, not loading IndyDIDResolver")
+    try:
+        if not context.settings.get("ledger.disabled"):
+            indy_resolver = ClassProvider(
+                "did_sov_plugin.v1_0.sov.IndyDIDResolver"
+            ).provide(context.settings, context.injector)
+            await indy_resolver.setup(context)
+            registry.register_resolver(indy_resolver)
+        else:
+            LOGGER.warning("Ledger is not configured, not loading IndyDIDResolver")
+    except Exception as e:
+        LOGGER.warning(f"Error loading IndyDIDResolver: {str(e)}")
 
-    web_resolver = ClassProvider(
-        "acapy_agent.resolver.default.web.WebDIDResolver"
-    ).provide(context.settings, context.injector)
-    await web_resolver.setup(context)
-    registry.register_resolver(web_resolver)
+    try:
+        web_resolver = ClassProvider("did_web_plugin.v1_0.web.WebDIDResolver").provide(
+            context.settings, context.injector
+        )
+        await web_resolver.setup(context)
+        registry.register_resolver(web_resolver)
+    except Exception as e:
+        LOGGER.warning(f"Error loading WebDIDResolver: {str(e)}")
 
     if context.settings.get("resolver.universal"):
         universal_resolver = ClassProvider(
