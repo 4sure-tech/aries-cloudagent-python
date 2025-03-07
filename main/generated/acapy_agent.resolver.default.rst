@@ -88,3 +88,11 @@ acapy\_agent.resolver.default.web module
    :members:
    :undoc-members:
    :show-inheritance:
+
+acapy\_agent.resolver.default.webvh module
+------------------------------------------
+
+.. automodule:: acapy_agent.resolver.default.webvh
+   :members:
+   :undoc-members:
+   :show-inheritance:
