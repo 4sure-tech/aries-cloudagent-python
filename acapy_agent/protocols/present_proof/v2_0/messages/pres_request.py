@@ -105,6 +105,10 @@ class V20PresRequestSchema(AgentMessageSchema):
     comment = fields.Str(
         required=False, metadata={"description": "Human-readable comment"}
     )
+    verifier_did = fields.Str(
+        required=False,
+        metadata={"description": "DID of the verifier"},
+    )
     will_confirm = fields.Bool(
         required=False,
         metadata={"description": "Whether verifier will send confirmation ack"},
