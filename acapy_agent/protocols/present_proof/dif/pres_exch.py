@@ -407,6 +407,7 @@ class DIFField(BaseModel):
         purpose: Optional[str] = None,
         predicate: Optional[str] = None,
         _filter: Optional[Filter] = None,
+        optional: bool = False,
     ):
         """Initialize Field."""
         self.paths = paths
@@ -414,6 +415,7 @@ class DIFField(BaseModel):
         self.predicate = predicate
         self._filter = _filter
         self.id = id
+        self.optional = optional
 
 
 class DIFFieldSchema(BaseModelSchema):
@@ -438,6 +440,7 @@ class DIFFieldSchema(BaseModelSchema):
         metadata={"description": "Preference"},
     )
     _filter = fields.Nested(FilterSchema, data_key="filter")
+    optional = fields.Bool(required=False, load_default=False)
 
 
 class Constraints(BaseModel):
